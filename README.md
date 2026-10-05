@@ -72,6 +72,23 @@ Spring Boot and reactive programming.
 
 ---
 
+### Ollama — In-cluster LLM Inference
+
+A CPU-only Ollama deployment running `llama3.2:3b-instruct-q4_K_M` inside the K3s
+cluster. Foundation for the idea-loop side project: a small model generates thoughts
+every few minutes and a discriminator scores them.
+
+| Resource | Description |
+|----------|-------------|
+| [rkamradt-helm-charts/ollama](../rkamradt-helm-charts/ollama) | Helm chart — Deployment, Service, PVC |
+
+**Stack:** Ollama 0.35.1, Llama 3.2 3B Q4_K_M, Kubernetes (K3s), local-path PVC  
+**In-cluster endpoint:** `http://ollama.llm.svc.cluster.local:11434`  
+**Deployed via:** ArgoCD (entry in `rkamradt-helm-charts/apps/values.yaml`)  
+**Internal only:** not exposed through Cloudflare tunnel or Auth0.
+
+---
+
 ## Project Dependency Map
 
 ```
@@ -92,6 +109,9 @@ naivecoin-run
 news-deploy
   └── readnews           (Spring Boot service)
   └── readnewsperf       (Gatling perf tests)
+
+ollama (llm namespace)
+  └── rkamradt-helm-charts/ollama  (Helm chart + PVC)
 ```
 
 ---
@@ -123,3 +143,4 @@ news-deploy
 | [readnews](../readnews) | Java/Spring Boot | News read service |
 | [readnewsperf](../readnewsperf) | Scala/Gatling | News perf tests |
 | [news-deploy](../news-deploy) | YAML | K8s deployment |
+| [rkamradt-helm-charts/ollama](../rkamradt-helm-charts/ollama) | YAML/Helm | LLM inference server |
