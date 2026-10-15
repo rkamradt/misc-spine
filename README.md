@@ -195,6 +195,20 @@ Read-only live dashboard of the K3s cluster — nodes, pods, namespaces, CPU/mem
 
 ---
 
+### Cluster Ops Agent — AI K8s Operations Assistant
+
+A read-only LangGraph agent that answers questions about the K3s cluster in plain English. Calls live Kubernetes and ArgoCD APIs via five read-only tools, detects unhealthy pods and routes to a focused diagnosis node, streams progress via SSE, and redacts sensitive data from all tool output. Built as a job-search showcase for LangGraph and agent-workflow experience.
+
+| Repo | Description |
+|------|-------------|
+| [cluster-ops-agent](../cluster-ops-agent) | Python 3.12 — LangGraph graph, FastAPI SSE endpoint, web UI |
+
+**Stack:** Python 3.12, LangGraph 1.2, Ollama (llama3.2), FastAPI, SQLite checkpointer, Kubernetes API (in-cluster ClusterRole), ArgoCD CRD  
+**Live at:** `agent.kamradtfamily.net` (Cloudflare tunnel → `cluster-ops-agent.cluster-ops-agent:8000`)  
+**Depends on:** Ollama in-cluster at `http://ollama.llm.svc.cluster.local:11434`
+
+---
+
 ### Ollama — In-cluster LLM Inference
 
 A CPU-only Ollama deployment running `llama3.2:3b-instruct-q4_K_M` inside the K3s
@@ -261,6 +275,11 @@ k8s-dashboard (cluster.kamradtfamily.net)
 
 gol (life.kamradtfamily.net)  (standalone static HTML)
 
+cluster-ops-agent (agent.kamradtfamily.net)
+  └── Ollama in-cluster (llm namespace)
+  └── Kubernetes API (in-cluster ClusterRole)
+  └── ArgoCD Applications CRD
+
 ollama (llm namespace)
   └── rkamradt-helm-charts/ollama  (Helm chart + PVC)
 ```
@@ -304,3 +323,4 @@ ollama (llm namespace)
 | [clodapp](../clodapp) | JavaScript/React | Platform landing page |
 | [portfolio](../portfolio) | HTML/CSS | Professional profile site (profile.kamradtfamily.net) |
 | [rkamradt-helm-charts/ollama](../rkamradt-helm-charts/ollama) | YAML/Helm | LLM inference server |
+| [cluster-ops-agent](../cluster-ops-agent) | Python 3.12 | AI K8s ops agent (agent.kamradtfamily.net) |

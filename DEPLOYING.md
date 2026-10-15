@@ -341,3 +341,4 @@ changes happen in the Cloudflare Zero Trust dashboard.
 | Game of Life | `life` | `gol` | 80 | `rkamradt/gol` |
 | Ollama (LLM) | — | `llm` | 11434 | `rkamradt-helm-charts/ollama` |
 | ArgoCD | `argocd` | `argocd` | — | platform |
+| Cluster Ops Agent | `agent` | `cluster-ops-agent` | 8000 | `rkamradt/cluster-ops-agent` |
