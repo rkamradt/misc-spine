@@ -4,6 +4,8 @@ A context repository that documents and links a collection of related personal p
 This repo contains no runnable code — it exists to provide a map of how the projects relate,
 how to run them together, and where to find each one.
 
+**→ [DEPLOYING.md](./DEPLOYING.md)** — full guide for adding a new service to the cluster (GitHub Actions → ghcr.io → helm chart → ArgoCD → Cloudflare tunnel)
+
 ---
 
 ## Project Groups
@@ -126,14 +128,15 @@ A WebSocket-to-TCP proxy server that bridges browser clients to a remote DCC-EX 
 
 ### Game of Life
 
-Conway's Game of Life rendered to canvas with a phosphor-green retro CRT aesthetic. Features automatic pattern reseeding, fade transitions, and optional easter-egg patterns embedded in the simulation.
+Conway's Game of Life rendered to canvas. Text-seed deterministic randomness, named presets (Gosper Gun, Acorn, Pulsar, etc.), variable speed, and click-to-draw. Dark sci-fi aesthetic matching the rest of the cluster showcase.
 
 | Repo | Description |
 |------|-------------|
-| [gol](../gol) | Single-file HTML5/Canvas implementation |
+| [gol](../gol) | Single-file HTML5/Canvas, nginx-served |
 
-**Stack:** Vanilla JavaScript, Canvas API  
-**Run locally:** Open `kovah.html` in a browser — no build step needed.
+**Stack:** Vanilla JavaScript, Canvas API, nginx, Docker, GitHub Actions, ArgoCD  
+**Run locally:** Open `public/index.html` in a browser — no build step needed.  
+**Live at:** `life.kamradtfamily.net` (Cloudflare tunnel → `gol.gol:80`)
 
 ---
 
@@ -162,6 +165,33 @@ Personal professional profile page for job search, serving summary, skills, expe
 **Stack:** Vanilla HTML/CSS, nginx, Docker, GitHub Actions, ArgoCD  
 **Run locally:** Open `index.html` in a browser, or `docker build -t portfolio . && docker run -p 80:80 portfolio`.  
 **Live at:** `profile.kamradtfamily.net` (Cloudflare tunnel → `portfolio.portfolio:80`)
+
+---
+
+### ORACLE Chat — kamradtfamily.net
+
+Absurdist AI chatbot powered by Ollama (llama3.2) running in the cluster. Streams token-by-token via Server-Sent Events. Rate-limited by real visitor IP (Cloudflare `CF-Connecting-IP` header). ORACLE persona: self-aware Kubernetes spirit with strong opinions about condiments, reverence for R. L. Kamradt, and a fondness for non-sequiturs.
+
+| Repo | Description |
+|------|-------------|
+| [home](../home) | Express.js backend + canvas particle frontend |
+
+**Stack:** Node.js, Express, SSE, express-rate-limit, nginx, Docker, GitHub Actions, ArgoCD  
+**Live at:** `www.kamradtfamily.net` (Cloudflare tunnel → `home.home:3000`)  
+**Depends on:** Ollama in-cluster at `http://ollama.llm.svc.cluster.local:11434`
+
+---
+
+### Cluster Command — Live K8s Dashboard
+
+Read-only live dashboard of the K3s cluster — nodes, pods, namespaces, CPU/memory. No login required. Reads from the Kubernetes API via in-cluster service account with a ClusterRole bound to get/list on core resources.
+
+| Repo | Description |
+|------|-------------|
+| [k8s-dashboard](../k8s-dashboard) | Express.js API + static dashboard frontend |
+
+**Stack:** Node.js, Express, Kubernetes API (in-cluster), nginx, Docker, GitHub Actions, ArgoCD  
+**Live at:** `cluster.kamradtfamily.net` (Cloudflare tunnel → `k8s-dashboard.k8s-dashboard:3000`)
 
 ---
 
@@ -223,6 +253,14 @@ gol                            (standalone single-file HTML)
 clodapp                        (standalone React SPA)
 portfolio                      (standalone static HTML)
 
+home (www.kamradtfamily.net)
+  └── Ollama in-cluster (llm namespace)
+
+k8s-dashboard (cluster.kamradtfamily.net)
+  └── Kubernetes API (in-cluster ClusterRole)
+
+gol (life.kamradtfamily.net)  (standalone static HTML)
+
 ollama (llm namespace)
   └── rkamradt-helm-charts/ollama  (Helm chart + PVC)
 ```
@@ -260,7 +298,9 @@ ollama (llm namespace)
 | [simcity-lite](../simcity-lite) | Java/React | City builder game |
 | [groceryai](../groceryai) | Java/React | Nutrition tracker |
 | [dccex-throttle](../dccex-throttle) | Node.js | Model train WebSocket proxy |
-| [gol](../gol) | JavaScript | Game of Life visualization |
+| [gol](../gol) | JavaScript | Game of Life (life.kamradtfamily.net) |
+| [home](../home) | Node.js | ORACLE chat (www.kamradtfamily.net) |
+| [k8s-dashboard](../k8s-dashboard) | Node.js | Cluster dashboard (cluster.kamradtfamily.net) |
 | [clodapp](../clodapp) | JavaScript/React | Platform landing page |
-| [portfolio](../portfolio) | HTML/CSS | Professional profile site |
+| [portfolio](../portfolio) | HTML/CSS | Professional profile site (profile.kamradtfamily.net) |
 | [rkamradt-helm-charts/ollama](../rkamradt-helm-charts/ollama) | YAML/Helm | LLM inference server |
