@@ -195,6 +195,20 @@ Read-only live dashboard of the K3s cluster — nodes, pods, namespaces, CPU/mem
 
 ---
 
+### Receipts — Receipt Scanning and Bookkeeping
+
+Receipt scanning app for Mary. Upload photos of paper receipts; Anthropic Vision extracts structured data; review/edit fields; confirm to upload the original to Google Drive and append a row to a Google Sheet. Auth restricted to @kamradtfamily.net accounts via Google Workspace OIDC.
+
+| Repo | Description |
+|------|-------------|
+| [receipts](../receipts) | Spring Boot 3.4 backend + React 18/Vite frontend, single image |
+
+**Stack:** Java 21, Spring Boot, Spring Security OAuth2, Google Sheets/Drive API, Anthropic API, React 18 + Vite, Docker (multi-stage), GitHub Actions, ArgoCD  
+**Live at:** `receipts.kamradtfamily.net` (Cloudflare tunnel → `receipts.receipts:8080`)  
+**Auth:** Google Workspace OIDC, internal consent screen, hd=kamradtfamily.net enforced server-side
+
+---
+
 ### Cluster Ops Agent — AI K8s Operations Assistant
 
 A read-only LangGraph agent that answers questions about the K3s cluster in plain English. Calls live Kubernetes and ArgoCD APIs via five read-only tools, detects unhealthy pods and routes to a focused diagnosis node, streams progress via SSE, and redacts sensitive data from all tool output. Built as a job-search showcase for LangGraph and agent-workflow experience.

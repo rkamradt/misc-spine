@@ -67,6 +67,7 @@ See **DEPLOYING.md** for the full checklist. Critical steps:
 | Game of Life | `life` | `gol` | 80 | Vanilla JS, nginx |
 | Cluster Ops Agent | `agent` | `cluster-ops-agent` | 8000 | Python, LangGraph, FastAPI |
 | Ollama (LLM) | — | `llm` | 11434 | Internal only |
+| Receipts | `receipts` | `receipts` | 8080 | Java 21, Spring Boot, Google OAuth2/Sheets/Drive, Anthropic API |
 
 **Ollama in-cluster:** `http://ollama.llm.svc.cluster.local:11434`, model `llama3.2:3b-instruct-q4_K_M`  
 **Local dev tunnel:** `kubectl port-forward -n llm svc/ollama 11434:11434`
