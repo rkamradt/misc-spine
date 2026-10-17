@@ -223,6 +223,22 @@ A read-only LangGraph agent that answers questions about the K3s cluster in plai
 
 ---
 
+### JupyterLab — In-cluster Notebook Environment
+
+Personal JupyterLab instance (scipy-notebook) for data exploration and experimentation.
+Internal access only via port-forward — no Cloudflare tunnel, no auth.
+Notebooks persisted on a 1Gi PVC at `/home/jovyan/work`.
+
+| Resource | Description |
+|----------|-------------|
+| [rkamradt-helm-charts/jupyter](../rkamradt-helm-charts/jupyter) | Helm chart — Deployment, Service, PVC |
+
+**Stack:** quay.io/jupyter/scipy-notebook, Kubernetes (K3s), local-path PVC  
+**Access:** `kubectl port-forward -n jupyter svc/jupyter 8888:8888` → `http://localhost:8888`  
+**Deployed via:** ArgoCD (no GitHub Actions — public image, no build pipeline)
+
+---
+
 ### Ollama — In-cluster LLM Inference
 
 A CPU-only Ollama deployment running `llama3.2:3b-instruct-q4_K_M` inside the K3s
@@ -296,6 +312,9 @@ cluster-ops-agent (agent.kamradtfamily.net)
 
 ollama (llm namespace)
   └── rkamradt-helm-charts/ollama  (Helm chart + PVC)
+
+jupyter (internal only)
+  └── rkamradt-helm-charts/jupyter  (Helm chart + PVC, public image)
 ```
 
 ---
@@ -337,4 +356,5 @@ ollama (llm namespace)
 | [clodapp](../clodapp) | JavaScript/React | Platform landing page |
 | [portfolio](../portfolio) | HTML/CSS | Professional profile site (profile.kamradtfamily.net) |
 | [rkamradt-helm-charts/ollama](../rkamradt-helm-charts/ollama) | YAML/Helm | LLM inference server |
+| [rkamradt-helm-charts/jupyter](../rkamradt-helm-charts/jupyter) | YAML/Helm | JupyterLab (internal) |
 | [cluster-ops-agent](../cluster-ops-agent) | Python 3.12 | AI K8s ops agent (agent.kamradtfamily.net) |

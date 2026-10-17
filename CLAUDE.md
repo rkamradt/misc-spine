@@ -68,6 +68,7 @@ See **DEPLOYING.md** for the full checklist. Critical steps:
 | Cluster Ops Agent | `agent` | `cluster-ops-agent` | 8000 | Python, LangGraph, FastAPI |
 | Ollama (LLM) | — | `llm` | 11434 | Internal only |
 | Receipts | `receipts` | `receipts` | 8080 | Java 21, Spring Boot, Google OAuth2/Sheets/Drive, Anthropic API |
+| JupyterLab | — | `jupyter` | 8888 | quay.io/jupyter/scipy-notebook, internal port-forward only, no auth |
 
 **Ollama in-cluster:** `http://ollama.llm.svc.cluster.local:11434`, model `llama3.2:3b-instruct-q4_K_M`  
 **Local dev tunnel:** `kubectl port-forward -n llm svc/ollama 11434:11434`
@@ -96,6 +97,15 @@ Local dev: `kubectl proxy --port=8001`, set `K8S_PROXY_URL=http://localhost:8001
 Token-based — `cloudflared` in the cluster fetches routing config from Cloudflare's API.
 **There are no Ingress resources.** All routing changes happen in the Cloudflare Zero Trust
 dashboard: Networks → Tunnels → [tunnel] → Published application routes → Add a route.
+
+---
+
+## Public-image services (no build pipeline)
+
+Some services use a public upstream image directly — no GitHub repo, no Actions workflow,
+no `ghcr-secret`, no `versionValuesFile`. The helm chart just pins the image.
+Examples: `jupyter` (quay.io/jupyter/scipy-notebook), `ollama`.
+To upgrade, edit the image tag in `values.yaml` and push to helm-charts.
 
 ---
 
