@@ -116,3 +116,4 @@ To upgrade, edit the image tag in `values.yaml` and push to helm-charts.
 - ArgoCD shows `OutOfSync` immediately after registering → normal, annotate to force refresh or wait 3 min
 - `kubectl` changes to ArgoCD-managed resources are reverted automatically — always edit through helm charts
 - Cloudflare tunnel routing is **not** in the cluster — don't look for Ingress resources
+- If a pod errors with `invalid literal for int() with base 10: 'tcp://...'` on startup, Kubernetes is injecting a `<SERVICENAME>_PORT` env var that collides with the app's own config. Fix: add `enableServiceLinks: false` to the pod spec
