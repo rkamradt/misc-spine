@@ -22,21 +22,23 @@ deployed on Kubernetes.
 | [blackbook-deploy](../blackbook-deploy) | Kubernetes manifests for the full Blackbook stack |
 
 **Stack:** React, Node.js, MongoDB, Kubernetes, nginx  
-**Run locally:** see `blackbook-deploy` for `docker-compose` and k8s YAML files.
+**Run locally:** see `blackbook-deploy` for `docker-compose` and k8s YAML files.  
+**Live at:** `blackbook.kamradtfamily.net` (Cloudflare tunnel → `blackbook.blackbook:80`)
 
 ---
 
 ### Javaman — Multiplayer Easter Egg Game
 
-A Node.js multiplayer game where players search for hidden easter eggs.
+A multiplayer game where players share a 100×100 world and navigate through it searching for easter eggs. Auth via Keycloak; game state persisted in PostgreSQL; API routed through the shared api-gateway.
 
 | Repo | Description |
 |------|-------------|
-| [javaman](../javaman) | Node.js backend game server |
-| [javaman-client](../javaman-client) | React frontend client |
+| [javaman](../javaman) | Node.js backend — Express, PostgreSQL, `/v1/game/*` REST API |
+| [javaman-client](../javaman-client) | React 18 + Vite frontend, Keycloak auth, nginx |
 
-**Stack:** Node.js, React, nginx, Docker  
-**Run locally:** use the `docker-compose.yml` in `javaman-client`.
+**Stack:** Node.js, React 18 + Vite, Keycloak, PostgreSQL, nginx, Docker  
+**Live at:** `javaman.kamradtfamily.net` (Cloudflare tunnel → `javaman-client.javaman:80`)  
+**API:** `api.kamradtfamily.net/javaman/v1/game/*` (api-gateway → `javaman.javaman:3001`)
 
 ---
 
@@ -54,7 +56,8 @@ inspired by [naivechain](https://github.com/lhartikk/naivechain).
 | [naiveperf](../naiveperf) | Gatling/JMeter performance tests |
 
 **Stack:** Node.js, React, nginx, Docker  
-**Run locally:** use `docker-compose.yml` in `naivecoin-run`.
+**Run locally:** use `docker-compose.yml` in `naivecoin-run`.  
+**Live at:** `naivecoin.kamradtfamily.net` (Cloudflare tunnel → `naivefront.naivefront:80`)
 
 ---
 
@@ -83,7 +86,8 @@ An AI-powered architecture and code generation platform. ArchitectAI (React SPA)
 | [archicode](../archicode) | Full stack — React frontend + Express backend + GitHub provider service |
 
 **Stack:** React 18 + Vite, Express.js, Auth0, MongoDB, Kafka, Anthropic API, GitHub API  
-**Run locally:** `node -r dotenv/config server.js` (backend), `npm run dev` (frontend) — requires `.env` with MongoDB/Auth0 secrets.
+**Run locally:** `node -r dotenv/config server.js` (backend), `npm run dev` (frontend) — requires `.env` with MongoDB/Auth0 secrets.  
+**Live at:** `architect.kamradtfamily.net` (Cloudflare tunnel → `architectai.rkamradt-platform:80`); API proxied through `api.kamradtfamily.net/architect`
 
 ---
 
@@ -96,7 +100,8 @@ A browser-based city builder game with a Spring Boot REST backend managing city 
 | [simcity-lite](../simcity-lite) | Spring Boot backend + React frontend |
 
 **Stack:** Spring Boot 3 (Java 21), React 18 + Vite, H2/PostgreSQL  
-**Run locally:** `cd simcity-backend && mvn spring-boot:run`, then `cd simcity-frontend && npm run dev`. Connect in-game at `http://localhost:8080`.
+**Run locally:** `cd simcity-backend && mvn spring-boot:run`, then `cd simcity-frontend && npm run dev`. Connect in-game at `http://localhost:8080`.  
+**Live at:** `simcity.kamradtfamily.net` (Cloudflare tunnel → `simcity-frontend.simcity-lite:80`; API via `api.kamradtfamily.net/simcity`)
 
 ---
 
@@ -142,14 +147,14 @@ Conway's Game of Life rendered to canvas. Text-seed deterministic randomness, na
 
 ### clodapp — Platform Landing Page
 
-Auth0-authenticated React SPA that serves as the landing page for the personal cloud platform at `kamradtfamily.net`. Shows login/logout state and displays Auth0 identity fields and access token claims. Deployed via ArgoCD to the K3s cluster.
+Keycloak-authenticated React SPA that serves as the landing page for the personal cloud platform at `kamradtfamily.net`. Shows login/logout state and displays identity and token claims.
 
 | Repo | Description |
 |------|-------------|
 | [clodapp](../clodapp) | React 18 + Vite SPA, nginx-served |
 
-**Stack:** React 18 + Vite, Auth0, nginx, Docker, ArgoCD  
-**Run locally:** `npm install && npm run dev` — requires `.env` with `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_CLIENT_ID`.  
+**Stack:** React 18 + Vite, Keycloak (PKCE), nginx, Docker, ArgoCD  
+**Run locally:** `npm install && npm run dev` — requires `.env` with `VITE_KEYCLOAK_URL`, `VITE_KEYCLOAK_REALM`, `VITE_KEYCLOAK_CLIENT_ID`.  
 **Live at:** `kamradtfamily.net` (Cloudflare tunnel → `clodapp.clodapp:80`)
 
 ---
@@ -256,6 +261,77 @@ every few minutes and a discriminator scores them.
 
 ---
 
+### API Gateway — Shared JWT Proxy
+
+A Go reverse proxy with Keycloak JWKS JWT validation. Validates Bearer tokens, injects `X-User-ID` (Keycloak `sub`), and routes prefixed paths to in-cluster backends. On key-not-found the JWKS cache auto-refreshes and retries once to handle key rotation.
+
+| Resource | Description |
+|----------|-------------|
+| [api-gateway](../api-gateway) | Go — JWT validation, reverse proxy, CORS |
+| [rkamradt-helm-charts/api-gateway](../rkamradt-helm-charts/api-gateway) | Helm chart — Deployment, Service, ConfigMap |
+
+**Routes:**
+
+| Prefix | Upstream |
+|--------|----------|
+| `/architect` | `architectai-api.rkamradt-platform:8080` |
+| `/simcity` | `simcity-backend.simcity-lite:8080` |
+| `/javaman` | `javaman.javaman:3001` |
+| `/blackbook` | `blackbook-read-profile.blackbook:8080` |
+| `/readnews` | `readnews.nr:8080` |
+| `/users`, `/accounts`, `/transactions` | fintech services |
+
+**Stack:** Go, Keycloak JWKS (realm `rkamradt` at `auth.kamradtfamily.net`)  
+**Live at:** `api.kamradtfamily.net` (Cloudflare tunnel → `api-gateway.api-gateway:8080`)
+
+---
+
+### Infisical — Secret Manager
+
+Self-hosted secret manager for storing API keys and credentials. Cloudflare Access gated (email policy). Kubernetes operator available for syncing secrets to cluster.
+
+| Resource | Description |
+|----------|-------------|
+| [rkamradt-helm-charts/infisical](../rkamradt-helm-charts/infisical) | Helm chart |
+
+**Stack:** Node.js, PostgreSQL (`infisicaldb`), Redis  
+**Live at:** `secrets.kamradtfamily.net` (Cloudflare Access → `infisical.infisical:8080`)
+
+---
+
+### Outline — Team Wiki
+
+Confluence-style wiki for documentation. Keycloak SSO login. Attachments stored in MinIO.
+
+| Resource | Description |
+|----------|-------------|
+| [rkamradt-helm-charts/outline](../rkamradt-helm-charts/outline) | Helm chart |
+
+**Stack:** Node.js, PostgreSQL (`outlinedb`), Redis, MinIO (bucket `outline`), Keycloak OIDC  
+**Live at:** `docs.kamradtfamily.net` (Cloudflare tunnel → `outline.outline:3000`)
+
+---
+
+### Platform Services — Shared Infrastructure
+
+Stateful services shared across multiple apps in the cluster. All internal-only; no Cloudflare exposure.
+
+| Service | Namespace | Port | Used by |
+|---------|-----------|------|---------|
+| Keycloak | `keycloak` | 8080 | All apps (SSO); public at `auth.kamradtfamily.net` |
+| MongoDB | `mongodb` | 27017 | ArchitectAI API, Blackbook, Readnews |
+| Kafka | `kafka` | 9092 | ArchitectAI (github-provider) |
+| MinIO | `minio` | 9000/9001 | ArchitectAI API, Outline (file storage) |
+| PostgreSQL | `postgresql` | 5432 | Keycloak, Javaman, SimCity, Infisical, Outline |
+| Redis | `redis` | 6379 | Infisical, Outline |
+| Infisical | `infisical` | 8080 | Secret manager; public at `secrets.kamradtfamily.net` |
+| Grafana + Loki + Promtail | `monitoring` | 3000/3100 | Cluster-wide log aggregation |
+| Axon Server | `axon-server` | 8124/8024 | Event store (gRPC 8124, HTTP 8024) |
+
+**Deployed via:** ArgoCD, entries in `rkamradt-helm-charts/apps/values.yaml`
+
+---
+
 ## Project Dependency Map
 
 ```
@@ -283,9 +359,11 @@ archicode
   └── github-provider          (Kafka consumer → GitHub)
   └── MongoDB, Kafka, Auth0, Anthropic API
 
-simcity-lite
+simcity-lite (simcity.kamradtfamily.net)
   └── simcity-backend          (Spring Boot)
   └── simcity-frontend         (React)
+  └── api-gateway              (proxies /simcity → simcity-backend)
+  └── PostgreSQL
 
 groceryai
   └── Spring Boot backend
@@ -293,9 +371,9 @@ groceryai
   └── USDA FoodData Central API
 
 dccex-throttle                 (standalone Node.js proxy)
-gol                            (standalone single-file HTML)
-clodapp                        (standalone React SPA)
-portfolio                      (standalone static HTML)
+gol (life.kamradtfamily.net)   (standalone single-file HTML)
+clodapp (kamradtfamily.net)    (standalone React SPA → Auth0)
+portfolio (profile.kamradtfamily.net)  (standalone static HTML)
 
 home (www.kamradtfamily.net)
   └── Ollama in-cluster (llm namespace)
@@ -303,18 +381,32 @@ home (www.kamradtfamily.net)
 k8s-dashboard (cluster.kamradtfamily.net)
   └── Kubernetes API (in-cluster ClusterRole)
 
-gol (life.kamradtfamily.net)  (standalone static HTML)
-
 cluster-ops-agent (agent.kamradtfamily.net)
   └── Ollama in-cluster (llm namespace)
   └── Kubernetes API (in-cluster ClusterRole)
   └── ArgoCD Applications CRD
+
+api-gateway (api.kamradtfamily.net)
+  └── architectai-api.rkamradt-platform:8080
+  └── simcity-backend.simcity-lite:8080
+  └── javaman.javaman:3001
+  └── blackbook-read-profile.blackbook:8080
+  └── readnews.nr:8080
+  └── fintech services (user/account/transaction)
 
 ollama (llm namespace)
   └── rkamradt-helm-charts/ollama  (Helm chart + PVC)
 
 jupyter (internal only)
   └── rkamradt-helm-charts/jupyter  (Helm chart + PVC, public image)
+
+platform services (shared infra)
+  └── MongoDB (mongodb namespace)
+  └── Kafka + Zookeeper (kafka namespace)
+  └── MinIO (minio namespace)
+  └── PostgreSQL (postgresql namespace)
+  └── Grafana + Loki + Promtail (monitoring namespace)
+  └── Axon Server (axon-server namespace)
 ```
 
 ---
@@ -323,8 +415,10 @@ jupyter (internal only)
 
 - **Frontend:** React apps served behind nginx in Docker
 - **Backend APIs:** Node.js or Spring Boot, containerized with Docker
-- **Persistence:** MongoDB
-- **Deployment:** Kubernetes manifests live in dedicated `-deploy` repos
+- **Persistence:** MongoDB (general), PostgreSQL (simcity), MinIO (object storage)
+- **Auth:** Auth0 (JWT audience `https://api.kamradtfamily.net`); validated at api-gateway for all backend routes
+- **Deployment:** All services in `rkamradt-helm-charts`; ArgoCD auto-syncs; CI patches `version-values.yaml` with `sha-<7hex>` tag
+- **Public access:** Cloudflare tunnel → no Ingress resources; routes configured in Zero Trust dashboard
 - **Local dev:** `docker-compose.yml` files in each stack's run/deploy repo
 
 ---
@@ -357,4 +451,5 @@ jupyter (internal only)
 | [portfolio](../portfolio) | HTML/CSS | Professional profile site (profile.kamradtfamily.net) |
 | [rkamradt-helm-charts/ollama](../rkamradt-helm-charts/ollama) | YAML/Helm | LLM inference server |
 | [rkamradt-helm-charts/jupyter](../rkamradt-helm-charts/jupyter) | YAML/Helm | JupyterLab (internal) |
+| [rkamradt-helm-charts/api-gateway](../rkamradt-helm-charts/api-gateway) | YAML/Helm | Shared JWT proxy (api.kamradtfamily.net) |
 | [cluster-ops-agent](../cluster-ops-agent) | Python 3.12 | AI K8s ops agent (agent.kamradtfamily.net) |
