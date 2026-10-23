@@ -70,6 +70,7 @@ See **DEPLOYING.md** for the full checklist. Critical steps:
 | Game of Life | `life` | `gol` | 80 | Vanilla JS, nginx |
 | Cluster Ops Agent | `agent` | `cluster-ops-agent` | 8000 | Python, LangGraph, FastAPI |
 | Receipts | `receipts` | `receipts` | 8080 | Java 21, Spring Boot, Google OAuth2/Sheets/Drive, Anthropic API |
+| Prior Auth Assist | `priorauth` | `priorauth-assist` | 8080 | Java 21, Spring Boot 3.4, MCP Java SDK, HAPI FHIR R4, Cloudflare Access |
 | ArchitectAI (frontend) | `architect` | `rkamradt-platform` | 80 | React 18 + Vite, Keycloak, nginx |
 | API Gateway | `api` | `api-gateway` | 8080 | Go, Keycloak JWKS JWT proxy, routes to all backends |
 | Blackbook | `blackbook` | `blackbook` | 80 | React, nginx |
@@ -95,6 +96,7 @@ See **DEPLOYING.md** for the full checklist. Critical steps:
 | Redis | `redis` | 6379 | `redis.redis.svc.cluster.local:6379`; used by Infisical, Outline |
 | Grafana | `monitoring` | 3000 | Metrics dashboards (Loki + Promtail also in `monitoring`) |
 | Axon Server | `axon-server` | 8124/8024 | Event store; gRPC 8124, HTTP 8024 |
+| HAPI FHIR (priorauth) | `priorauth-fhir` | 8080 | `http://priorauth-fhir.priorauth-fhir:8080/fhir`; FHIR R4; PostgreSQL backend; internal only |
 
 **Local dev tunnel for Ollama:** `kubectl port-forward -n llm svc/ollama 11434:11434`
 

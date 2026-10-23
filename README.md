@@ -228,6 +228,46 @@ A read-only LangGraph agent that answers questions about the K3s cluster in plai
 
 ---
 
+### Prior Auth Assist — Prior-Authorization Paperwork Assistant
+
+An AI-powered prior-authorization assistant for clinicians. An MCP server exposes five tools
+(find_patient, requirements_for, prefill_documentation, missing_items, build_request) backed
+by a HAPI FHIR R4 server. Claude reduces paperwork by auto-filling documentation from the
+chart and surfacing gaps. All coverage decisions remain with humans.
+
+| Repo | Description |
+|------|-------------|
+| [priorauth-assist](../priorauth-assist) | Spring Boot 3.4 MCP server + FHIR rules + demo data + Helm charts |
+
+**Stack:** Java 21, Spring Boot 3.4, MCP Java SDK 0.9.0, HAPI FHIR R4, FHIR Claim (PAS-style),
+PostgreSQL, React 18, Docker (multi-stage), GitHub Actions, ArgoCD  
+**Live at:** `priorauth.kamradtfamily.net` (Cloudflare Access → `priorauth-assist.priorauth-assist:8080`)  
+**Internal FHIR:** `priorauth-fhir.priorauth-fhir:8080` (HAPI FHIR v7.4.0, PostgreSQL backend)  
+**MCP tools:** stdio (Claude Desktop) and streamable HTTP (in-cluster)  
+**Demo:** 5 hand-crafted patients + Synthea population; 5 coverage rules (knee MRI, lumbar MRI, sleep study, adalimumab step-therapy, adalimumab bypass)
+
+---
+
+### API Smoke Tests — In-cluster Service Health Monitor
+
+Periodic smoke test suite that runs as a Kubernetes CronJob every 30 minutes and validates
+all in-cluster API services. Bypasses Cloudflare Access and edge auth, so internal-only
+services and Cloudflare-gated services are equally testable. Results are emitted as
+structured JSON to stdout for Loki/Grafana ingestion.
+
+| Repo | Description |
+|------|-------------|
+| [api-smoke-tests](../api-smoke-tests) | Python 3.12 — pytest + httpx test suite, runner, Helm chart |
+
+**Stack:** Python 3.12, pytest, httpx, pytest-json-report, minio, Kubernetes CronJob, ArgoCD  
+**Schedule:** Every 30 minutes (`*/30 * * * *`)  
+**Namespace:** `api-smoke-tests`  
+**Setup:** `./setup-secrets.sh` after ArgoCD creates the namespace  
+**Services tested:** HAPI FHIR, Ollama, Cluster Ops Agent, Axon Server, Grafana (API key), MinIO (access key)  
+**Auth:** No edge auth in-cluster; optional secrets injected via Helm `secretRefs` for Grafana and MinIO
+
+---
+
 ### JupyterLab — In-cluster Notebook Environment
 
 Personal JupyterLab instance (scipy-notebook) for data exploration and experimentation.
@@ -394,6 +434,14 @@ api-gateway (api.kamradtfamily.net)
   └── readnews.nr:8080
   └── fintech services (user/account/transaction)
 
+api-smoke-tests (CronJob, api-smoke-tests namespace)
+  └── priorauth-fhir.priorauth-fhir:8080   (HAPI FHIR)
+  └── ollama.llm:11434                       (Ollama)
+  └── cluster-ops-agent.cluster-ops-agent:8000
+  └── axon-server.axon-server:8024
+  └── grafana.monitoring:3000               (optional, needs API key)
+  └── minio.minio:9000                      (optional, needs access key)
+
 ollama (llm namespace)
   └── rkamradt-helm-charts/ollama  (Helm chart + PVC)
 
@@ -453,3 +501,4 @@ platform services (shared infra)
 | [rkamradt-helm-charts/jupyter](../rkamradt-helm-charts/jupyter) | YAML/Helm | JupyterLab (internal) |
 | [rkamradt-helm-charts/api-gateway](../rkamradt-helm-charts/api-gateway) | YAML/Helm | Shared JWT proxy (api.kamradtfamily.net) |
 | [cluster-ops-agent](../cluster-ops-agent) | Python 3.12 | AI K8s ops agent (agent.kamradtfamily.net) |
+| [api-smoke-tests](../api-smoke-tests) | Python 3.12 | In-cluster API smoke test CronJob |
